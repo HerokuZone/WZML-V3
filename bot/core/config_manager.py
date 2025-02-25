@@ -10,7 +10,7 @@ class Config:
     BOT_TOKEN = ""
     HELPER_TOKENS = ""
     BOT_MAX_TASKS = 0
-    BOT_PM = False
+    BOT_PM = True
     CMD_SUFFIX = ""
     DATABASE_URL = ""
     DEFAULT_UPLOAD = "rc"
@@ -22,7 +22,7 @@ class Config:
     MEDIA_STORE = True
     FORCE_SUB_IDS = ""
     GDRIVE_ID = ""
-    GD_DESP = "Uploaded with WZ Bot"
+    GD_DESP = "Uploaded with @TGFilmsZone"
     INCOMPLETE_TASK_NOTIFIER = False
     INDEX_URL = ""
     IS_TEAM_DRIVE = False
@@ -71,7 +71,7 @@ class Config:
     USER_TIME_INTERVAL = 0
     UPLOAD_PATHS = {}
     UPSTREAM_REPO = ""
-    UPSTREAM_BRANCH = "master"
+    UPSTREAM_BRANCH = "upstream"
     UPDATE_PKGS = False
     USENET_SERVERS = []
     USER_SESSION_STRING = ""
