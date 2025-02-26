@@ -96,12 +96,13 @@ async def start_cb(_, query):
  
 @new_task
 async def close_button(_, query: CallbackQuery):
+    LOGGER.info(f"Close button clicked by {query.from_user.id}")
     try:
         await query.message.delete()
-        LOGGER.info(f"Close button clicked by {query.from_user.id}, message deleted successfully.")
+        LOGGER.info(f"Message deleted successfully for {query.from_user.id}")
     except Exception as e:
-        LOGGER.error(f"Error deleting message on close button click: {e}") 
-
+        LOGGER.error(f"Error deleting message: {e}")
+        
 @new_task
 async def ping(_, message):
     start_time = monotonic()
