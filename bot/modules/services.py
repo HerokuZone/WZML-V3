@@ -25,6 +25,7 @@ from ..helper.telegram_helper.message_utils import (
     send_message,
 )
 
+from bot.text import TEXT
 
 @new_task
 async def start(_, message):
@@ -32,6 +33,7 @@ async def start(_, message):
     buttons = ButtonMaker()
     buttons.url_button("Git Repo", "https://www.github.com/SilentDemonSD/WZML-X")
     buttons.url_button("Updates", "https://t.me/WZML_X")
+    buttons.data_button("❌ Close", "close")
     reply_markup = buttons.build_menu(2)
 
     if len(message.command) > 1 and message.command[1] == "wzmlx":
@@ -42,57 +44,32 @@ async def start(_, message):
             decrypted_url = decrypted_url.replace("file", "")
             chat_id, msg_id = decrypted_url.split("&&")
             LOGGER.info(f"Copying message from {chat_id} & {msg_id} to {userid}")
-            return await TgClient.bot.copy_message( # TODO: make it function
-                    chat_id=userid,
-                    from_chat_id=int(chat_id) if match(r'\d+', chat_id) else chat_id,
-                    message_id=int(msg_id),
-                    
-                    disable_notification=True,
-                )
+            return await TgClient.bot.copy_message(
+                chat_id=userid,
+                from_chat_id=int(chat_id) if match(r'\d+', chat_id) else chat_id,
+                message_id=int(msg_id),
+                disable_notification=True,
+            )
         elif Config.VERIFY_TIMEOUT:
             input_token, pre_uid = decrypted_url.split("&&")
             if int(pre_uid) != userid:
-                return await send_message(
-                    message,
-                    "<b>Access Token is not yours!</b>\n\n<i>Kindly generate your own to use.</i>",
-                )
+                return await send_message(message, TEXT["INVALID_TOKEN"])
             data = user_data.get(userid, {})
             if "VERIFY_TOKEN" not in data or data["VERIFY_TOKEN"] != input_token:
-                return await send_message(
-                    message,
-                    "<b>Access Token already used!</b>\n\n<i>Kindly generate a new one.</i>",
-                )
-            buttons.data_button(
-                "Activate Access Token", f"start pass {input_token}", "header"
-            )
+                return await send_message(message, TEXT["USED_TOKEN"])
+            buttons.data_button("Activate Access Token", f"start pass {input_token}", "header")
             reply_markup = buttons.build_menu(2)
-            msg = f"""⌬ Access Login Token : 
-    │
-    ┟ <b>Status</b> → <code>Generated Successfully</code>
-    ┟ <b>Access Token</b> → <code>{input_token}</code>
-    ┃
-    ┖ <b>Validity:</b> {get_readable_time(int(Config.VERIFY_TIMEOUT))}"""
-            return await send_message(message, msg, reply_markup)
+            return await send_message(message, TEXT["TOKEN_SUCCESS"].format(input_token, get_readable_time(int(Config.VERIFY_TIMEOUT))), reply_markup)
 
     if await CustomFilters.authorized(_, message):
-        start_string = f"""
-This bot can mirror from links|tgfiles|torrents|nzb|rclone-cloud to any rclone cloud, Google Drive or to telegram.
-Type /{BotCommands.HelpCommand[0]} to get a list of available commands
-"""
-        await send_message(message, start_string, reply_markup)
+        await send_message(message, TEXT["START_AUTH"], reply_markup)
     elif Config.BOT_PM:
-        await send_message(
-            message,
-            "<i>Now, Bot will send you all your files and links here. Start Using Now...</i>",
-            reply_markup,
-        )
+        await send_message(message, TEXT["START_PM"], reply_markup)
     else:
-        await send_message(
-            message,
-            "<i>Bot can mirror/leech from links|tgfiles|torrents|nzb|rclone-cloud to any rclone cloud, Google Drive or to telegram.\n\n⚠️ You Are not authorized user! Deploy your own WZML-X bot</i>",
-            reply_markup,
-        )
+        await send_message(message, TEXT["START_UNAUTHORIZED"], reply_markup)
+
     await database.set_pm_users(userid)
+    
 
 
 @new_task
