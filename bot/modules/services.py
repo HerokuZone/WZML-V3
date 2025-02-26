@@ -6,6 +6,8 @@ from re import match
 from aiofiles import open as aiopen
 from cloudscraper import create_scraper
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+from pyrogram.filters import regex
+from pyrogram.handlers import CallbackQueryHandler
 
 from bot.core.tg_client import TgClient
 from bot.text import TEXT
@@ -25,6 +27,8 @@ from ..helper.telegram_helper.message_utils import (
     send_file,
     send_message,
 )
+
+bot.add_handler(CallbackQueryHandler(close_button, regex("^close$")))
 
 @new_task
 async def start(_, message):
@@ -68,32 +72,31 @@ async def start(_, message):
         await send_message(message, TEXT["START_UNAUTHORIZED"], reply_markup)
 
     await database.set_pm_users(userid)
-    
 
 @new_task
 async def start_cb(_, query):
     user_id = query.from_user.id
     input_token = query.data.split()[2]
     data = user_data.get(user_id, {})
- 
+
     if input_token == "activated":
         return await query.answer("Already Activated!", show_alert=True)
     elif "VERIFY_TOKEN" not in data or data["VERIFY_TOKEN"] != input_token:
         return await query.answer("Already Used, Generate New One", show_alert=True)
- 
+
     update_user_ldata(user_id, "VERIFY_TOKEN", str(uuid4()))
     update_user_ldata(user_id, "VERIFY_TIME", time())
     if Config.DATABASE_URL:
         await database.update_user_data(user_id)
     await query.answer("Activated Access Login Token!", show_alert=True)
- 
+
     kb = query.message.reply_markup.inline_keyboard[1:]
     kb.insert(
         0,
         [InlineKeyboardButton("✅️ Activated ✅", callback_data="start pass activated")],
     )
     await edit_reply_markup(query.message, InlineKeyboardMarkup(kb))
- 
+
 @new_task
 async def close_button(_, query: CallbackQuery):
     LOGGER.info(f"Close button clicked by {query.from_user.id}")
@@ -102,7 +105,10 @@ async def close_button(_, query: CallbackQuery):
         LOGGER.info(f"Message deleted successfully for {query.from_user.id}")
     except Exception as e:
         LOGGER.error(f"Error deleting message: {e}")
-        
+
+bot.add_handler(CallbackQueryHandler(close_button, regex("^close$")))
+
+
 @new_task
 async def ping(_, message):
     start_time = monotonic()
