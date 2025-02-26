@@ -8,6 +8,7 @@ from cloudscraper import create_scraper
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from bot.core.tg_client import TgClient
+from bot.text import TEXT
 
 from .. import LOGGER, user_data
 from ..core.config_manager import Config
@@ -25,14 +26,13 @@ from ..helper.telegram_helper.message_utils import (
     send_message,
 )
 
-from bot.text import TEXT
 
 @new_task
 async def start(_, message):
     userid = message.from_user.id
     buttons = ButtonMaker()
-    buttons.url_button("Git Repo", "https://www.github.com/SilentDemonSD/WZML-X")
-    buttons.url_button("Updates", "https://t.me/WZML_X")
+    buttons.url_button("🔰 CHANNELS", "https://t.me/tgfilmszone")
+    buttons.url_button("🧑‍🚒 ADMIN", "https://t.me/RangoZex")
     buttons.data_button("❌ Close", "close")
     reply_markup = buttons.build_menu(2)
 
@@ -71,6 +71,10 @@ async def start(_, message):
     await database.set_pm_users(userid)
     
 
+@new_task
+async def close_button(_, query):
+    if query.data == "close":
+        await query.message.delete()
 
 @new_task
 async def start_cb(_, query):
