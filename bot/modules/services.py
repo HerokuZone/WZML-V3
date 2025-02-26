@@ -1,22 +1,30 @@
-from re import match
-from time import time
+from html import escape
+from time import monotonic, time
 from uuid import uuid4
-from pyrogram.types import CallbackQuery
+from re import match
+
+from aiofiles import open as aiopen
+from cloudscraper import create_scraper
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+
 from bot.core.tg_client import TgClient
 from bot.text import TEXT
+
 from .. import LOGGER, user_data
 from ..core.config_manager import Config
 from ..helper.ext_utils.bot_utils import decode_slink, new_task, update_user_ldata
 from ..helper.ext_utils.status_utils import get_readable_time
 from ..helper.ext_utils.db_handler import database
+from ..helper.telegram_helper.bot_commands import BotCommands
 from ..helper.telegram_helper.button_build import ButtonMaker
 from ..helper.telegram_helper.filters import CustomFilters
 from ..helper.telegram_helper.message_utils import (
     delete_message,
+    edit_message,
     edit_reply_markup,
+    send_file,
     send_message,
 )
-
 
 @new_task
 async def start(_, message):
@@ -24,7 +32,7 @@ async def start(_, message):
     buttons = ButtonMaker()
     buttons.url_button("🔰 CHANNELS", "https://t.me/tgfilmszone")
     buttons.url_button("🧑‍🚒 ADMIN", "https://t.me/RangoZex")
-    buttons.data_button("❌ Close", "close")
+    buttons.data_button("❌ Close", "close")  # ✅ Correct Callback
     reply_markup = buttons.build_menu(2)
 
     if len(message.command) > 1 and message.command[1] == "wzmlx":
@@ -61,36 +69,36 @@ async def start(_, message):
 
     await database.set_pm_users(userid)
 
-
 @new_task
 async def close_button(_, query: CallbackQuery):
-    await query.message.delete()
-
+    await query.message.delete()  # ✅ Fix: Message will delete properly
+    
 
 @new_task
-async def callback_query_handler(_, query: CallbackQuery):
-    if query.data == "close":
-        await close_button(_, query)
-    elif query.data.startswith("start pass"):
-        user_id = query.from_user.id
-        input_token = query.data.split()[2]
-        data = user_data.get(user_id, {})
-
-        if input_token == "activated":
-            return await query.answer("Already Activated!", show_alert=True)
-        elif "VERIFY_TOKEN" not in data or data["VERIFY_TOKEN"] != input_token:
-            return await query.answer("Already Used, Generate New One", show_alert=True)
-
-        update_user_ldata(user_id, "VERIFY_TOKEN", str(uuid4()))
-        update_user_ldata(user_id, "VERIFY_TIME", time())
-        if Config.DATABASE_URL:
-            await database.update_user_data(user_id)
-        await query.answer("Activated Access Login Token!", show_alert=True)
-
-        kb = query.message.reply_markup.inline_keyboard[1:]
-        kb.insert(0, [InlineKeyboardButton("✅️ Activated ✅", callback_data="start pass activated")])
-        await edit_reply_markup(query.message, InlineKeyboardMarkup(kb))
-
+async def start_cb(_, query):
+    user_id = query.from_user.id
+    input_token = query.data.split()[2]
+    data = user_data.get(user_id, {})
+ 
+    if input_token == "activated":
+        return await query.answer("Already Activated!", show_alert=True)
+    elif "VERIFY_TOKEN" not in data or data["VERIFY_TOKEN"] != input_token:
+        return await query.answer("Already Used, Generate New One", show_alert=True)
+ 
+    update_user_ldata(user_id, "VERIFY_TOKEN", str(uuid4()))
+    update_user_ldata(user_id, "VERIFY_TIME", time())
+    if Config.DATABASE_URL:
+        await database.update_user_data(user_id)
+    await query.answer("Activated Access Login Token!", show_alert=True)
+ 
+    kb = query.message.reply_markup.inline_keyboard[1:]
+    kb.insert(
+        0,
+        [InlineKeyboardButton("✅️ Activated ✅", callback_data="start pass activated")],
+    )
+    await edit_reply_markup(query.message, InlineKeyboardMarkup(kb))
+ 
+ 
 
 @new_task
 async def ping(_, message):
