@@ -68,10 +68,6 @@ async def start(_, message):
         await send_message(message, TEXT["START_UNAUTHORIZED"], reply_markup)
 
     await database.set_pm_users(userid)
-
-@new_task
-async def close_button(_, query: CallbackQuery):
-    await query.message.delete()  # ✅ Fix: Message will delete properly
     
 
 @new_task
@@ -98,7 +94,13 @@ async def start_cb(_, query):
     )
     await edit_reply_markup(query.message, InlineKeyboardMarkup(kb))
  
- 
+@new_task
+async def close_button(_, query: CallbackQuery):
+    try:
+        await query.message.delete()
+        LOGGER.info(f"Close button clicked by {query.from_user.id}, message deleted successfully.")
+    except Exception as e:
+        LOGGER.error(f"Error deleting message on close button click: {e}") 
 
 @new_task
 async def ping(_, message):
