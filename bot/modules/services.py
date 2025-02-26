@@ -28,7 +28,6 @@ from ..helper.telegram_helper.message_utils import (
     send_message,
 )
 
-bot.add_handler(CallbackQueryHandler(close_button, regex("^close$")))
 
 @new_task
 async def start(_, message):
@@ -106,8 +105,7 @@ async def close_button(_, query: CallbackQuery):
     except Exception as e:
         LOGGER.error(f"Error deleting message: {e}")
 
-bot.add_handler(CallbackQueryHandler(close_button, regex("^close$")))
-
+TgClient.bot.add_handler(CallbackQueryHandler(close_button, regex("^close$")))
 
 @new_task
 async def ping(_, message):
